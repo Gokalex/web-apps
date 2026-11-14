@@ -53,9 +53,16 @@ function watch(input) {
             if (again) { const next = again; again = 0; later(next); }
         }, delay);
     };
+    let focusedAt = 0, lastHeight = window.innerHeight;
     area.addEventListener('input', () => later(150));
     area.addEventListener('keyup', () => later(150));
-    area.addEventListener('focus', () => later(400));
+    area.addEventListener('focus', () => { focusedAt = Date.now(); later(400); });
+    // When the host fits the iframe to the keyboard, the frame keeps getting shorter after the focus check.
+    window.addEventListener('resize', () => {
+        const shrank = window.innerHeight < lastHeight;
+        lastHeight = window.innerHeight;
+        if (shrank && Date.now() - focusedAt < 2000) later(150);
+    });
 }
 
 // Call once the document is ready: the text input lives in sdk-all.js, which loads after the API object exists.
