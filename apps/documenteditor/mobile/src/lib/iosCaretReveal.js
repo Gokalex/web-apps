@@ -11,7 +11,8 @@ function visibleBottom() {
     if (vv && vv.height < window.innerHeight - 100) return vv.offsetTop + vv.height;   // viewport already shrinks
     const long = Math.max(screen.width, screen.height);
     const short = Math.min(screen.width, screen.height);
-    const landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+    const landscape = screen.orientation ? screen.orientation.type.startsWith('landscape')
+        : window.matchMedia('(orientation: landscape)').matches;
     const keyboard = landscape ? short * KEYBOARD_SHARE_LANDSCAPE : Math.max(long * KEYBOARD_SHARE_PORTRAIT, KEYBOARD_MIN);
     return window.innerHeight - keyboard;
 }
@@ -32,26 +33,29 @@ function revealCaret(input) {
 function watch(input) {
     const area = input.HtmlArea;
     if (!area) return;
-    let timer = 0;
+    let timer = 0, again = 0;
     // The engine moves the caret asynchronously (its own scroll waits 100 ms); Return and Backspace are handled
-    // on keydown and fire no input event.
-    const later = (delay) => { clearTimeout(timer); timer = setTimeout(() => revealCaret(input), delay); };
+    // on keydown and fire no input event. Throttled, with one more check after the last event of a burst.
+    const later = (delay) => {
+        if (timer) { again = Math.max(again, delay); return; }
+        timer = setTimeout(() => {
+            timer = 0;
+            revealCaret(input);
+            if (again) { const next = again; again = 0; later(next); }
+        }, delay);
+    };
     area.addEventListener('input', () => later(150));
     area.addEventListener('keyup', () => later(150));
     area.addEventListener('focus', () => later(400));
 }
 
-// The text input lives in sdk-all.js, which loads after the API object exists: wait for it.
-export function patchIosCaretReveal(tries = 0) {
+// Call once the document is ready: the text input lives in sdk-all.js, which loads after the API object exists.
+export function patchIosCaretReveal() {
     const AC = window.AscCommon;
-    if (!AC || !AC.CTextInput || !AC.AscBrowser) {
-        if (tries < 600) setTimeout(() => patchIosCaretReveal(tries + 1), 500);
-        return;
-    }
-    if (!AC.AscBrowser.isSafariMobile) return;
+    if (!AC || !AC.CTextInput || !AC.AscBrowser || !AC.AscBrowser.isSafariMobile) return;
     const proto = AC.CTextInput.prototype;
-    if (proto.__mekkoCaretReveal) return;
-    proto.__mekkoCaretReveal = true;
+    if (proto.__caretRevealPatched) return;
+    proto.__caretRevealPatched = true;
     const init = proto.init;
     proto.init = function () {
         init.apply(this, arguments);

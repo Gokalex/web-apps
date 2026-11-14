@@ -480,7 +480,7 @@ class MainController extends Component {
                     let hcolor = (/(?:&|^)headingsColor=([^&]+)&?/i).exec(window.location.search.substring(1));
                     hcolor && (config['headings-color'] = '#' + hcolor[1]);
                     this.api = isPDF ? new Asc.PDFEditorApi(config) : new Asc.asc_docs_api(config);
-                    if (!isPDF) patchIosCaretReveal();
+                    if (!isPDF && Device.phone) Common.Notifications.on('document:ready', patchIosCaretReveal);
 
                     Common.Notifications.trigger('engineCreated', this.api);
                     // Common.EditorApi = {get: () => this.api};
