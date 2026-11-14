@@ -24,6 +24,7 @@ function draw() {
             `sdk ${sdk ? sdk.offsetHeight : '-'} eng ${wc ? wc.Height : '-'} kb ${input && document.activeElement === input.HtmlArea ? 'on' : 'off'}`,
             `caret ${t ? r(t.top) + '-' + r(t.bottom) : '-'}`,
             `sv ${sv ? r(sv.scrollVCurrentY) + '/' + r(sv.maxScrollY) : '-'} is ${is ? r(-is.y) + '/' + r(-is.maxScrollY) : '-'}`,
+            `watch ${window.__rvWatch || 0} same ${input && window.__rvArea === input.HtmlArea ? 'y' : 'n'} rv ${JSON.stringify(window.__rv || {})}`,
         ].join('\n');
     } catch (err) {
         box.textContent = String(err);
