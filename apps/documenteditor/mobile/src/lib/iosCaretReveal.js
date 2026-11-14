@@ -13,9 +13,14 @@ function keyboardTop() {
     return window.innerHeight - keyboard;
 }
 
-export function patchIosCaretReveal() {
+// The text input lives in sdk-all.js, which loads after the API object exists: wait for it.
+export function patchIosCaretReveal(tries = 0) {
     const AC = window.AscCommon;
-    if (!AC || !AC.CTextInput || !AC.AscBrowser || !AC.AscBrowser.isSafariMobile) return;
+    if (!AC || !AC.CTextInput || !AC.AscBrowser) {
+        if (tries < 240) setTimeout(() => patchIosCaretReveal(tries + 1), 250);
+        return;
+    }
+    if (!AC.AscBrowser.isSafariMobile) return;
 
     const proto = AC.CTextInput.prototype;
     if (proto.__mekkoCaretReveal) return;
@@ -55,12 +60,13 @@ export function patchIosCaretReveal() {
         check(this);
     };
 
+    const watchFocus = (input) => {
+        if (input.HtmlArea) input.HtmlArea.addEventListener('focus', () => setTimeout(() => check(input), 400));
+    };
     const init = proto.init;
     proto.init = function () {
         init.apply(this, arguments);
-        const input = this;
-        if (input.HtmlArea) {
-            input.HtmlArea.addEventListener('focus', () => setTimeout(() => check(input), 400));
-        }
+        watchFocus(this);
     };
+    if (AC.g_inputContext) watchFocus(AC.g_inputContext);
 }
