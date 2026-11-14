@@ -1,6 +1,18 @@
-// iOS Safari: the hidden contenteditable that receives typing covers the whole canvas, so its own caret sits at
-// the top-left and WebKit never scrolls the real caret out from under the keyboard. Keep the hidden caret on the
-// document caret (padding moves it without changing the touch area) so WebKit reveals it while typing.
+// iOS Safari: the on-screen keyboard covers the editor iframe without resizing it, and a cross-origin iframe cannot
+// read the host's visualViewport, so the engine believes the whole canvas is visible and leaves the caret under
+// the keyboard. While the hidden input has focus, keep the caret above an estimated keyboard top.
+const KEYBOARD_SHARE_PORTRAIT = 0.40;   // of the long screen side
+const KEYBOARD_SHARE_LANDSCAPE = 0.55;  // of the short screen side
+const MARGIN = 24;
+
+function keyboardTop() {
+    const long = Math.max(screen.width, screen.height);
+    const short = Math.min(screen.width, screen.height);
+    const landscape = window.matchMedia && window.matchMedia('(orientation: landscape)').matches;
+    const keyboard = landscape ? short * KEYBOARD_SHARE_LANDSCAPE : long * KEYBOARD_SHARE_PORTRAIT;
+    return window.innerHeight - keyboard;
+}
+
 export function patchIosCaretReveal() {
     const AC = window.AscCommon;
     if (!AC || !AC.CTextInput || !AC.AscBrowser || !AC.AscBrowser.isSafariMobile) return;
@@ -9,23 +21,38 @@ export function patchIosCaretReveal() {
     if (proto.__mekkoCaretReveal) return;
     proto.__mekkoCaretReveal = true;
 
-    const move = proto.move;
-    proto.move = function (x, y) {
-        move.apply(this, arguments);
-        const area = this.HtmlArea;
-        const target = document.getElementById(this.TargetId);
-        if (!area || area.tagName !== 'DIV' || !target) return;
+    let pending = false;
+    const check = (input) => {
+        if (pending) return;
+        pending = true;
+        requestAnimationFrame(() => {
+            pending = false;
+            const area = input.HtmlArea;
+            const target = document.getElementById(input.TargetId);
+            const wc = window.Asc && Asc.editor && Asc.editor.WordControl;
+            if (!area || !target || !wc || !wc.m_oScrollVerApi) return;
+            if (document.activeElement !== area || area.contentEditable !== 'true') return;
+            const caretBottom = target.getBoundingClientRect().bottom;
+            const limit = keyboardTop() - MARGIN;
+            if (caretBottom <= limit || target.style.display === 'none') return;
+            wc.m_bIsUpdateTargetNoAttack = true;
+            wc.m_oScrollVerApi.scrollByY(caretBottom - limit);
+            wc.OnScroll();
+        });
+    };
 
-        const height = parseInt(target.style.height, 10) || 16;
-        const left = x != null ? x : parseInt(target.style.left, 10) || 0;
-        const top = y != null ? y : parseInt(target.style.top, 10) || 0;
-        const style = area.style;
-        style.boxSizing = 'border-box';
-        style.overflow = 'hidden';
-        style.whiteSpace = 'pre';
-        style.fontSize = height + 'px';
-        style.lineHeight = height + 'px';
-        style.paddingLeft = Math.max(0, left) + 'px';
-        style.paddingTop = Math.max(0, top) + 'px';
+    const move = proto.move;
+    proto.move = function () {
+        move.apply(this, arguments);
+        check(this);
+    };
+
+    const init = proto.init;
+    proto.init = function () {
+        init.apply(this, arguments);
+        const input = this;
+        if (input.HtmlArea) {
+            input.HtmlArea.addEventListener('focus', () => setTimeout(() => check(input), 400));
+        }
     };
 }
