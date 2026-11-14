@@ -30,6 +30,14 @@ export function patchIosCaretReveal() {
             const area = input.HtmlArea;
             const target = document.getElementById(input.TargetId);
             const wc = window.Asc && Asc.editor && Asc.editor.WordControl;
+            try {   // TEMP diagnostics for the iOS Simulator, numbers and flags only
+                parent.postMessage({ mekkoDebug: {
+                    area: !!area, target: !!target, wc: !!wc, scroll: !!(wc && wc.m_oScrollVerApi),
+                    active: document.activeElement === area, ce: area && area.contentEditable,
+                    caret: target && target.getBoundingClientRect().bottom, display: target && target.style.display,
+                    limit: keyboardTop() - MARGIN, innerH: innerHeight, screenH: screen.height,
+                } }, '*');
+            } catch (e) { /* ignore */ }
             if (!area || !target || !wc || !wc.m_oScrollVerApi) return;
             if (document.activeElement !== area || area.contentEditable !== 'true') return;
             const caretBottom = target.getBoundingClientRect().bottom;
