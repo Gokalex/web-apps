@@ -31,21 +31,17 @@ function revealCaret(input) {
     const target = document.getElementById(input.TargetId);
     const wc = input.Api && input.Api.WordControl;
     const scroll = wc && wc.m_oScrollVerApi;
-    const rv = window.__rv = { n: ((window.__rv && window.__rv.n) || 0) + 1, why: '' };   // TEMPORARY diag
-    if (!area || !target || !scroll) { rv.why = 'noel'; return; }
-    if (document.activeElement !== area || area.contentEditable !== 'true') { rv.why = 'nofocus'; return; }
+    if (!area || !target || !scroll) return;
+    if (document.activeElement !== area || area.contentEditable !== 'true') return;
     const doc = wc.m_oLogicDocument;
-    if (doc && doc.IsSelectionUse && doc.IsSelectionUse()) { rv.why = 'sel'; return; }   // no caret while text is selected
+    if (doc && doc.IsSelectionUse && doc.IsSelectionUse()) return;   // no caret while text is selected
     const overflow = target.getBoundingClientRect().bottom - (visibleBottom() - MARGIN);
-    rv.why = 'ok'; rv.ov = Math.round(overflow); rv.vb = Math.round(visibleBottom()); rv.s0 = Math.round(scroll.scrollVCurrentY);
     if (overflow > 0) scroll.scrollByY(overflow);
-    rv.s1 = Math.round(scroll.scrollVCurrentY);
 }
 
 function watch(input) {
     const area = input.HtmlArea;
     if (!area) return;
-    window.__rvWatch = (window.__rvWatch || 0) + 1; window.__rvArea = area;   // TEMPORARY diag
     let timer = 0, again = 0;
     // The engine moves the caret asynchronously (its own scroll waits 100 ms); Return and Backspace are handled
     // on keydown and fire no input event. Throttled, with one more check after the last event of a burst.
