@@ -21,5 +21,11 @@ export function patchIosKeyboardInput() {
     proto.getAreaValue = function () {
         return getAreaValue.apply(this, arguments).replace(/\u00A0/g, ' ');
     };
+    // sdkjs can create the input, or create it again, after document:ready: set the attributes in init too.
+    const init = proto.init;
+    proto.init = function () {
+        init.apply(this, arguments);
+        enableKeyboardHelp(this);
+    };
     if (AC.g_inputContext) enableKeyboardHelp(AC.g_inputContext);
 }
