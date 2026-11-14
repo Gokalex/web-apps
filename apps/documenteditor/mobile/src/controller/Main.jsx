@@ -20,7 +20,6 @@ import EncodingController from "./Encoding";
 import DropdownListController from "./DropdownList";
 import { patchIosCaretReveal } from '../lib/iosCaretReveal';
 import { patchIosKeyboardInput } from '../lib/iosKeyboardInput';
-import { startLayoutDiag } from '../lib/layoutDiag';
 import AddFormImageController from './add/AddFormImage.jsx';
 import { Device } from '../../../../common/mobile/utils/device';
 import { processArrayScripts } from '../../../../common/mobile/utils/processArrayScripts.js';
@@ -485,7 +484,6 @@ class MainController extends Component {
                     if (!isPDF && Device.phone) {
                         Common.Notifications.on('document:ready', patchIosCaretReveal);
                         Common.Notifications.on('document:ready', patchIosKeyboardInput);
-                        Common.Notifications.on('document:ready', startLayoutDiag);
                     }
 
                     Common.Notifications.trigger('engineCreated', this.api);
