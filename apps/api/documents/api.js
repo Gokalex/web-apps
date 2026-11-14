@@ -1295,8 +1295,52 @@
 			iframe.style.position = "fixed";
             iframe.style.overflow = "hidden";
             document.body.style.overscrollBehaviorY = "contain";
+            fitIframeToVisualViewport(iframe);
 		}
         return iframe;
+    }
+
+    // iPhone: the host page may size the mobile editor once, from the window height at load time, and the on-screen
+    // keyboard covers the iframe without resizing it. Keep the iframe as tall as the visible area below its top edge,
+    // so the editor fills the screen and ends at the keyboard, and send the editor that height (null when the iframe
+    // is not fitted) so it can keep the caret in view.
+    function fitIframeToVisualViewport(iframe) {
+        var vv = window.visualViewport;
+        if (!vv || !window.MutationObserver || window.top !== window || !/iPhone|iPod/.test(navigator.userAgent)) return;
+        var origin;
+        try { origin = new URL(iframe.src, window.location.href).origin; } catch (e) { return; }
+        var sent, observer;
+        var send = function (height) {
+            if (height === sent || !iframe.contentWindow) return;
+            sent = height;
+            iframe.contentWindow.postMessage({ hostVisibleHeight: height }, origin);
+        };
+        var fit = function () {
+            if (!iframe.isConnected) {
+                vv.removeEventListener('resize', fit);
+                vv.removeEventListener('scroll', fit);
+                observer.disconnect();
+                return;
+            }
+            if (Math.abs(vv.scale - 1) > 0.01) return;   // pinch zoom: keep the current height
+            var height = Math.round(vv.offsetTop + vv.height - iframe.getBoundingClientRect().top);
+            if (height < 100) {
+                send(null);
+                return;
+            }
+            if (iframe.style.height !== height + 'px')
+                iframe.style.height = height + 'px';
+            send(height);
+        };
+        vv.addEventListener('resize', fit);
+        vv.addEventListener('scroll', fit);
+        iframe.addEventListener('load', function () {
+            sent = undefined;
+            fit();
+        });
+        // The host may set its own height later (on load, on orientation change): put ours back.
+        observer = new MutationObserver(fit);
+        observer.observe(iframe, { attributes: true, attributeFilter: ['style'] });
     }
 
     function postMessage(wnd, msg, buffer) {

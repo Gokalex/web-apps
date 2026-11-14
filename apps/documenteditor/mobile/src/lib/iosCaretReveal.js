@@ -6,7 +6,16 @@ const KEYBOARD_SHARE_LANDSCAPE = 0.55;  // of the short screen side
 const KEYBOARD_MIN = 300;               // keyboard plus predictive bar on the smallest iPhones
 const MARGIN = 24;
 
+// Height api.js in the host page keeps the iframe at on iPhone (it ends at the keyboard); null when not fitted.
+let hostVisibleHeight = null;
+window.addEventListener('message', (e) => {
+    const d = e.data;
+    if (e.source !== window.parent || !d || typeof d !== 'object' || !Object.prototype.hasOwnProperty.call(d, 'hostVisibleHeight')) return;
+    hostVisibleHeight = typeof d.hostVisibleHeight === 'number' && d.hostVisibleHeight > 0 ? d.hostVisibleHeight : null;
+});
+
 function visibleBottom() {
+    if (hostVisibleHeight) return Math.min(hostVisibleHeight, window.innerHeight);
     const vv = window.visualViewport;
     if (vv && vv.height < window.innerHeight - 100) return vv.offsetTop + vv.height;   // viewport already shrinks
     const long = Math.max(screen.width, screen.height);
