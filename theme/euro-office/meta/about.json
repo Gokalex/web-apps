@@ -8,6 +8,7 @@
     { "text": "This program is free software, licensed under the GNU Affero General Public License version 3 (AGPL-3.0-only). You may convey and modify this work under the terms of that licence: [View licence]({licenceUrl})" },
     { "text": "This program is distributed WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE." },
     { "text": "The complete corresponding source code for this running version is available at: [Source code]({sourceUrl})" },
+    { "text": "This build also contains changes made for Mekko after the Euro-Office release. Their source code is available at: https://github.com/Gokalex/web-apps/tree/mekko-9.3.7" },
     { "commits": "Build commits" }
   ]
 }
