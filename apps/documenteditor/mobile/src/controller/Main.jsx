@@ -22,6 +22,7 @@ import { patchIosCaretReveal } from '../lib/iosCaretReveal';
 import { patchIosKeyboardInput } from '../lib/iosKeyboardInput';
 import { patchAndroidViewerKeyboard } from '../lib/androidViewerKeyboard';
 import { patchLightEastAsianFonts } from '../lib/lightEastAsianFonts';
+import { patchSmallerPhotos } from '../lib/smallerPhotos';
 import AddFormImageController from './add/AddFormImage.jsx';
 import { Device } from '../../../../common/mobile/utils/device';
 import { processArrayScripts } from '../../../../common/mobile/utils/processArrayScripts.js';
@@ -488,8 +489,10 @@ class MainController extends Component {
                         Common.Notifications.on('document:ready', patchIosCaretReveal);
                         Common.Notifications.on('document:ready', patchIosKeyboardInput);
                     }
-                    if (!isPDF)
+                    if (!isPDF) {
                         Common.Notifications.on('document:ready', patchAndroidViewerKeyboard);
+                        Common.Notifications.on('document:ready', patchSmallerPhotos);
+                    }
 
                     Common.Notifications.trigger('engineCreated', this.api);
                     // Common.EditorApi = {get: () => this.api};
