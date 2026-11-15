@@ -1292,6 +1292,8 @@
 
 		if (config.type == "mobile")
 		{
+            // The mobile context menu Paste reads the clipboard (there is no paste event to read it from).
+            iframe.setAttribute("allow", "autoplay; camera; microphone; display-capture; clipboard-write; clipboard-read;");
 			iframe.style.position = "fixed";
             iframe.style.overflow = "hidden";
             document.body.style.overscrollBehaviorY = "contain";

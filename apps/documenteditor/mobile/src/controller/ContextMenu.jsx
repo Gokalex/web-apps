@@ -7,6 +7,7 @@ import ContextMenuController from '../../../../common/mobile/lib/controller/Cont
 import { idContextMenuElement } from '../../../../common/mobile/lib/view/ContextMenu';
 import EditorUIController from '../lib/patch';
 import { icons } from '../../../../common/mobile/lib/editor';
+import { pasteFromMenu, noteMenuCopy } from '../lib/mobileClipboard';
 
 @inject(stores => ({
     isEdit: stores.storeAppOptions.isEdit,
@@ -94,16 +95,18 @@ class ContextMenu extends ContextMenuController {
         const api = Common.EditorApi.get();
         switch (action) {
             case 'cut':
-                if ( !LocalStorage.getBool("de-hide-copy-cut-paste-warning") && this.props.canCopy )
+                if ( !noteMenuCopy(api.Cut()) && !LocalStorage.getBool("de-hide-copy-cut-paste-warning") && this.props.canCopy )
                     this.showCopyCutPasteModal();
                 break;
             case 'copy':
-                if (!api.Copy() && !LocalStorage.getBool("de-hide-copy-cut-paste-warning") && this.props.canCopy )
+                if ( !noteMenuCopy(api.Copy()) && !LocalStorage.getBool("de-hide-copy-cut-paste-warning") && this.props.canCopy )
                     this.showCopyCutPasteModal();
                 break;
             case 'paste':
-                if ( !LocalStorage.getBool("de-hide-copy-cut-paste-warning") )
-                    this.showCopyCutPasteModal();
+                pasteFromMenu(api).then((from) => {
+                    if ( from !== 'clipboard' && !LocalStorage.getBool("de-hide-copy-cut-paste-warning") )
+                        this.showCopyCutPasteModal();
+                }).catch((e) => console.warn('paste:', e));
                 break;
             case 'viewcomment':
                 Common.Notifications.trigger('viewcomment');
@@ -279,7 +282,7 @@ class ContextMenu extends ContextMenuController {
     initMenuItems() {
         if ( !Common.EditorApi ) return [];
 
-        const { isEdit, canFillForms, isDisconnected, isViewer, canEditComments, isProtected, typeProtection, isForm } = this.props;
+        const { isEdit, canFillForms, isDisconnected, isViewer, canEditComments, isProtected, typeProtection, isForm, displayMode } = this.props;
 
         if (isEdit && EditorUIController.ContextMenu) {
             return EditorUIController.ContextMenu.mapMenuItems(this);
@@ -330,14 +333,18 @@ class ContextMenu extends ContextMenuController {
             }
 
             if (!isDisconnected) {
-                if (canFillForms && canCopy && !locked && (!isViewer || isForm) && isAllowedEditing) {
+                // canFillForms is set only for PDF forms: a Word document being edited needs its own check.
+                const canFillHere = canFillForms && canCopy && !locked && (!isViewer || isForm) && isAllowedEditing;
+                const canEditHere = isEdit && !isViewer && displayMode !== 'final' && displayMode !== 'original' && !locked && isAllowedEditing;
+
+                if (canFillHere || (canEditHere && canCopy)) {
                     itemsIcon.push({
                         event: 'cut',
                         icon: icons.cut.id
                     });
                 }
 
-                if (canFillForms && canCopy && !locked && (!isViewer || isForm) && isAllowedEditing) {
+                if (canFillHere || canEditHere) {
                     itemsIcon.push({
                         event: 'paste',
                         icon: icons.paste.id
