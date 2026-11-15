@@ -18,7 +18,7 @@ import LongActionsController from "./LongActions";
 import PluginsController from '../../../../common/mobile/lib/controller/Plugins.jsx';
 import EncodingController from "./Encoding";
 import DropdownListController from "./DropdownList";
-import { patchIosCaretReveal } from '../lib/iosCaretReveal';
+import { patchCaretReveal } from '../lib/caretReveal';
 import { patchIosKeyboardInput } from '../lib/iosKeyboardInput';
 import { patchAndroidViewerKeyboard } from '../lib/androidViewerKeyboard';
 import { patchLightEastAsianFonts } from '../lib/lightEastAsianFonts';
@@ -486,7 +486,7 @@ class MainController extends Component {
                     if (!isPDF) patchLightEastAsianFonts();
                     this.api = isPDF ? new Asc.PDFEditorApi(config) : new Asc.asc_docs_api(config);
                     if (!isPDF && Device.phone) {
-                        Common.Notifications.on('document:ready', patchIosCaretReveal);
+                        Common.Notifications.on('document:ready', patchCaretReveal);
                         Common.Notifications.on('document:ready', patchIosKeyboardInput);
                     }
                     if (!isPDF) {
