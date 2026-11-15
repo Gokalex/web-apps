@@ -1300,13 +1300,13 @@
         return iframe;
     }
 
-    // iPhone: the host page may size the mobile editor once, from the window height at load time, and the on-screen
-    // keyboard covers the iframe without resizing it. Keep the iframe as tall as the visible area below its top edge,
-    // so the editor fills the screen and ends at the keyboard, and send the editor that height (null when the iframe
-    // is not fitted) so it can keep the caret in view.
+    // iPhone, Android: the host page sizes the mobile editor itself and can get it wrong (iPhone: once, from the
+    // height at load time, while the keyboard covers the iframe; Nextcloud apps: it leaves room for a header that
+    // is not there, a blank strip above the Android keyboard). Keep the iframe as tall as the visible area below
+    // its top edge, so it ends at the keyboard, and send the editor that height (null when not fitted).
     function fitIframeToVisualViewport(iframe) {
         var vv = window.visualViewport;
-        if (!vv || !window.MutationObserver || window.top !== window || !/iPhone|iPod/.test(navigator.userAgent)) return;
+        if (!vv || !window.MutationObserver || window.top !== window || !/iPhone|iPod|Android/.test(navigator.userAgent)) return;
         var origin;
         try { origin = new URL(iframe.src, window.location.href).origin; } catch (e) { return; }
         var sent, observer;

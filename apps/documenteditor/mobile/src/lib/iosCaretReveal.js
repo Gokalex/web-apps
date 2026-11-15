@@ -6,7 +6,8 @@ const KEYBOARD_SHARE_LANDSCAPE = 0.55;  // of the short screen side
 const KEYBOARD_MIN = 300;               // keyboard plus predictive bar on the smallest iPhones
 const MARGIN = 24;
 
-// Height api.js in the host page keeps the iframe at on iPhone (it ends at the keyboard); null when not fitted.
+// Height api.js in the host page keeps the iframe at (it ends at the keyboard); null when not fitted. Sent on
+// Android too, where the frame itself shrinks with the keyboard and nothing here runs.
 let hostVisibleHeight = null;
 window.addEventListener('message', (e) => {
     const d = e.data;
